@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تأیید کد</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --ink: #eef0f3;
+    --muted: #8b93a1;
+    --accent: #5b8cff;
+    --accent-dim: #3a5bb0;
+    --error: #ff6b6b;
+    --success: #3ddc97;
+    color-scheme: dark;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --ink: #14161a;
+      --muted: #6b7280;
+      --accent: #2f5fe0;
+      --accent-dim: #c7d4f8;
+      --error: #d9403f;
+      --success: #0e9f6e;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--panel);
+    border-radius: 18px;
+    padding: 36px 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    text-align: center;
+  }
+  h1 {
+    font-size: 1.3rem;
+    margin: 0 0 8px;
+    font-weight: 700;
+  }
+  p.sub {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin: 0 0 28px;
+    line-height: 1.6;
+  }
+  .digits {
+    display: flex;
+    gap: 8px;
+    direction: ltr;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+  .digits input {
+    width: 44px;
+    height: 54px;
+    text-align: center;
+    font-size: 1.4rem;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: var(--ink);
+    outline: none;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .digits input {
+      border-color: rgba(0,0,0,0.12);
+      background: rgba(0,0,0,0.02);
+    }
+  }
+  .digits input:focus {
+    border-color: var(--accent);
+    background: rgba(91,140,255,0.08);
+  }
+  .status {
+    min-height: 20px;
+    font-size: 0.85rem;
+    margin-bottom: 18px;
+  }
+  .status.error { color: var(--error); }
+  .status.success { color: var(--success); }
+  button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, opacity .15s ease;
+  }
+  button:disabled {
+    background: var(--accent-dim);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  button:not(:disabled):hover { opacity: 0.92; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>کد تأیید را وارد کنید</h1>
+    <p class="sub">کد ۶ رقمی را در کادرهای زیر وارد کنید.</p>
+    <form id="form">
+      <div class="digits">
+        <input inputmode="numeric" maxlength="1" pattern="[0-9]" required>
+        <input inputmode="numeric" maxlength="1" pattern="[0-9]" required>
+        <input inputmode="numeric" maxlength="1" pattern="[0-9]" required>
+        <input inputmode="numeric" maxlength="1" pattern="[0-9]" required>
+        <input inputmode="numeric" maxlength="1" pattern="[0-9]" required>
+        <input inputmode="numeric" maxlength="1" pattern="[0-9]" required>
+      </div>
+      <div class="status" id="status"></div>
+      <button type="submit" id="submitBtn">تأیید کد</button>
+    </form>
+  </div>
+
+<script>
+  const inputs = Array.from(document.querySelectorAll('.digits input'));
+  const status = document.getElementById('status');
+  const form = document.getElementById('form');
+
+  inputs.forEach((el, idx) => {
+    el.addEventListener('input', () => {
+      el.value = el.value.replace(/[^0-9]/g, '');
+      if (el.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !el.value && idx > 0) inputs[idx - 1].focus();
+    });
+    el.addEventListener('paste', (e) => {
+      const text = (e.clipboardData.getData('text') || '').replace(/[^0-9]/g, '');
+      if (!text) return;
+      e.preventDefault();
+      text.split('').slice(0, inputs.length - idx).forEach((ch, i) => {
+        inputs[idx + i].value = ch;
+      });
+      const next = inputs[Math.min(idx + text.length, inputs.length - 1)];
+      next.focus();
+    });
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = inputs.map(i => i.value).join('');
+    if (code.length !== 6) {
+      status.textContent = 'لطفاً هر ۶ رقم را وارد کنید.';
+      status.className = 'status error';
+      return;
+    }
+    // این بخش فقط کد وارد شده را نگه می‌دارد.
+    // بررسی واقعی کد باید سمت سرور و با محدودیت تعداد تلاش (rate limiting) انجام شود.
+    status.textContent = 'کد دریافت شد: ' + code;
+    status.className = 'status success';
+
+    inputs.forEach(i => i.value = '');
+    inputs[0].focus();
+  });
+</script>
+</body>
+</html>
